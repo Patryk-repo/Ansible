@@ -1,0 +1,7 @@
+---
+- name: Ping all Windwos Servers
+  hosts: Windows_Servers
+  gather_facts: no
+  tasks:
+    - name: Ping the servers
+      win_ping:

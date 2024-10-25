@@ -1,0 +1,50 @@
+---
+- name: Zarządzanie buforem wydruku i powiadomienia na Discord
+  hosts: host1.AD.LOCAL,host2.AD.LOCAL
+  gather_facts: no
+  tasks:
+    - name: Start spooler service
+      ansible.windows.win_service:
+        name: spooler
+        start_mode: auto
+        state: started
+
+    - name: Clear print jobs and send notification
+      ansible.windows.win_shell: |
+        $webhookUrl = "https://discordapp.com/api/webhooks/1451261147695744/TT36TJoXesUmB149gT2oiwrLx1LwV6VxJJEs_AYkZk7ug83HNhOp5oFu6wJ_U7"
+        $serverName = $env:COMPUTERNAME
+        do {
+            $totalPrintJobs = 0
+            $printers = Get-Printer
+            foreach ($printer in $printers) {
+                $totalPrintJobs += $printer.JobCount
+            }
+            Write-Output "SUMA ZADAŃ DRUKOWANIA TO $totalPrintJobs"
+            Start-Sleep -Seconds 2
+            if ($totalPrintJobs -gt 0) {
+                Start-Service spooler
+                $printers = Get-Printer | Where-Object {$_.JobCount -gt 0}
+                foreach ($printer in $printers) {
+                    $IDs = Get-PrintJob -PrinterName $printer.name | Select-Object -ExpandProperty id
+                    foreach ($id in $IDs) {
+                        Remove-PrintJob -PrinterName $printer.name -ID $id
+                    }
+                }
+            }
+        } while ($totalPrintJobs -gt 0)
+
+        $spoolerStatus = (Get-Service spooler).Status
+        $jobColor = if ($totalPrintJobs -eq 0 -and $spoolerStatus -eq 'Running') {0x00FF00} else {0xFF0000}
+        $statusMessage = "Na serwerze '$serverName', aktualnie w kolejce wydruku jest **$totalPrintJobs** zadań. Usługa bufora wydruku aktualnie $(if ($spoolerStatus -eq 'Running') {'**działa**'} else {'**nie działa**'})."
+
+        $embed = @{
+            title = "Status Serwera Wydruku"
+            description = $statusMessage
+            color = $jobColor
+        }
+
+        $body = @{
+            embeds = @($embed)
+        } | ConvertTo-Json
+
+        Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $body -ContentType 'application/json'

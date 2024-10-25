@@ -1,0 +1,7 @@
+---
+- name: Ping all workstations in the win10 group
+  hosts: win10
+  gather_facts: no
+  tasks:
+    - name: Ping the servers
+      win_ping:

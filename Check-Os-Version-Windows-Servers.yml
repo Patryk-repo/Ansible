@@ -1,0 +1,14 @@
+- hosts: Windows_Servers
+  gather_facts: yes
+  gather_timeout: 30
+  become: false
+  tasks:
+    - name: Get Windows version
+      win_shell: |
+        (Get-CimInstance -ClassName Win32_OperatingSystem).Caption + " " + `
+        (Get-CimInstance -ClassName Win32_OperatingSystem).Version + " Build " + `
+        (Get-CimInstance -ClassName Win32_OperatingSystem).BuildNumber
+      register: windows_version
+    - name: Display Windows version
+      debug:
+        msg: "Windows version is {{ windows_version.stdout }}"

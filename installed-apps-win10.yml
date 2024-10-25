@@ -1,0 +1,16 @@
+---
+- name: Zbieranie listy zainstalowanych aplikacji na komputerach z Windows 10
+  hosts: win10
+  gather_facts: yes
+  tasks:
+    - name: Uruchomienie PowerShella w celu uzyskania listy zainstalowanych aplikacji
+      win_shell: |
+        $apps1 = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher
+        $apps2 = Get-ItemProperty HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher
+        $apps = $apps1 + $apps2 | Where-Object { $_.DisplayName -ne $null -and ($_.DisplayName -like '*Soloplan*' -or $_.Publisher -like '*Soloplan*') }
+        $apps | ConvertTo-Json -Compress
+      register: installed_apps
+
+    - name: Wyświetlenie listy zainstalowanych aplikacji zawierających słowo 'Soloplan'
+      debug:
+        var: installed_apps.stdout

@@ -1,0 +1,21 @@
+---
+- name: Odinstalowywanie aplikacji Soloplan na komputerach z Windows 10
+  hosts: win10
+  gather_facts: no
+  tasks:
+    - name: Pobieranie listy zainstalowanych aplikacji i odinstalowywanie tych z "Soloplan"
+      win_shell: |
+        $apps = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like '*Soloplan*' -or $_.Vendor -like '*Soloplan*' }
+        if ($apps) {
+          foreach ($app in $apps) {
+            Write-Host "Odinstalowywanie aplikacji: $($app.Name)"
+            $app.Uninstall()
+          }
+        } else {
+          Write-Host "Nie znaleziono aplikacji Soloplan do odinstalowania."
+        }
+      register: soloplan_uninstall_result
+
+    - name: Wyświetlenie wyniku odinstalowywania aplikacji Soloplan
+      debug:
+        var: soloplan_uninstall_result.stdout_lines
