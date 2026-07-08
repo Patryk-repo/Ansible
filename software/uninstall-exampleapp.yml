@@ -1,0 +1,21 @@
+---
+- name: Odinstalowywanie aplikacji ExampleApp na komputerach z Windows 10
+  hosts: windows_workstations
+  gather_facts: no
+  tasks:
+    - name: Pobieranie listy zainstalowanych aplikacji i odinstalowywanie tych z "ExampleApp"
+      ansible.windows.win_shell: |
+        $apps = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like '*ExampleApp*' -or $_.Vendor -like '*ExampleApp*' }
+        if ($apps) {
+          foreach ($app in $apps) {
+            Write-Host "Odinstalowywanie aplikacji: $($app.Name)"
+            $app.Uninstall()
+          }
+        } else {
+          Write-Host "Nie znaleziono aplikacji ExampleApp do odinstalowania."
+        }
+      register: exampleapp_uninstall_result
+
+    - name: Wyświetlenie wyniku odinstalowywania aplikacji ExampleApp
+      debug:
+        var: exampleapp_uninstall_result.stdout_lines

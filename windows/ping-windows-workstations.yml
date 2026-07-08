@@ -1,0 +1,7 @@
+---
+- name: Ping all workstations in the windows_workstations group
+  hosts: windows_workstations
+  gather_facts: no
+  tasks:
+    - name: Ping the servers
+      ansible.windows.win_ping:

@@ -1,0 +1,7 @@
+---
+- name: Ping all Windows servers
+  hosts: windows_servers
+  gather_facts: no
+  tasks:
+    - name: Ping the servers
+      ansible.windows.win_ping:
